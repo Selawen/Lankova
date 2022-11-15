@@ -128,8 +128,8 @@ public class DamageHandler : MonoBehaviour, IDamagable
 
         torsoStatusEffects = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
         armStatusEffects = new int[] { 0, 0, 0, 0, 0, 0, 0};
-        launcherStatusEffects = new int[] { 0, 0, 0, 0, 0, 0, 0};
-        legStatusEffects = new int[][] { new int[]{ 0,0,0,0}, new int[]{ 0, 0, 0, 0 } };
+        launcherStatusEffects = new int[] { 0, 0, 0, 0, 0, 0};
+        legStatusEffects = new int[][] { new int[]{ 0,0,0}, new int[]{ 0, 0, 0} };
 
         StartCoroutine(ShieldRecharge());
 
@@ -178,9 +178,83 @@ public class DamageHandler : MonoBehaviour, IDamagable
         }
     }
 
+    //Going to ignore Flickering stuff for now, since that is an absolute pain in the ass to fix because not every object should be turned on
+        //It's going to take some kind of check for each flicker target which checks/updates EVERY object on it. I hate everything. EVERYTHING.
     void UpdateDamageEffects()
     {
+        #region TORSO
+        leftLightObject.SetActive(torsoStatusEffects[5] > 0);
+        rightLightObject.SetActive(torsoStatusEffects[6] > 0);
+
+        currentShieldMax = Mathf.Max(defaultValues.baseShieldMax * (1.0f - (torsoStatusEffects[7] * 0.25f)), 0);
+
         torsoArmor = defaultValues.baseTorsoArmor - torsoStatusEffects[9];
+        #endregion
+
+        #region ARM
+        for (int i = 0; i < 3; i++)
+        {
+            switch (armStatusEffects[i])
+            {
+                case 0: player.barrelFireChances[i] = 1.0f; break;
+                case 1: player.barrelFireChances[i] = 0.75f; break;
+                case 2: player.barrelFireChances[i] = 0.25f; break;
+                case 3: player.barrelFireChances[i] = 0.0f; break;
+                default: Debug.LogError("WTF"); break;
+            }
+        }
+
+        //player.fireRate = defaultValues.baseFireRate / (2 * armStatusEffects[3]);
+        player.fireRate = defaultValues.baseFireRate / Mathf.Pow(2, armStatusEffects[3]);
+
+        switch(armStatusEffects[4])
+        {
+            case 0: player.reloadTime = defaultValues.baseReloadTime; break;
+            case 1: player.reloadTime = defaultValues.baseReloadTime + 0.25f; break;
+            case 2: player.reloadTime = defaultValues.baseReloadTime + 0.75f; break;
+            case 3: player.reloadTime = defaultValues.baseReloadTime + 1.5f; break;
+            default: Debug.LogError("WTF"); break;
+        }
+
+        player.bulletMaxSpread = defaultValues.baseBulletMaxSpread + (defaultValues.baseBulletMaxSpread * armStatusEffects[4]);
+
+        switch (armStatusEffects[6])
+        {
+            case 0: player.maxClipSize = defaultValues.baseMaxClipSize; break;
+            case 1: player.maxClipSize = defaultValues.baseMaxClipSize / 2; break;
+            case 2: player.maxClipSize = defaultValues.baseMaxClipSize / 4; break;
+            default: Debug.LogError("WTF"); break;
+        }
+        #endregion
+
+        #region LEGS
+
+        for (int leg = 0; leg < 2; leg++)
+        {
+            player.legMoveSpeeds[leg] = defaultValues.baseLegMoveSpeeds[leg] / Mathf.Pow(1.5f, legStatusEffects[leg][0]);
+            if(legStatusEffects[leg][0] >= 3) { player.legMoveSpeeds[leg] = 0; }
+
+            player.legStepTimes[leg] = defaultValues.baseLegStepTimes[leg] * Mathf.Pow(1.5f, legStatusEffects[leg][1]);
+        }
+
+        float newRotSpd = defaultValues.baseNormalRotationSpeed;
+        if(legStatusEffects[0][2] > 0) { newRotSpd /= 2; }
+        if(legStatusEffects[1][2] > 0) { newRotSpd /= 2; }
+        player.PlayerRotationSpeed = newRotSpd;
+
+        #endregion
+
+        #region LAUNCHER
+
+        launcher.barrelRotateTime = defaultValues.baseBarrelRotateTime * Mathf.Pow(2, launcherStatusEffects[0]);
+        launcher.unloadTime = defaultValues.baseUnloadTime * Mathf.Pow(2, launcherStatusEffects[1]);
+        launcher.loadTime = defaultValues.baseLoadTime * Mathf.Pow(2, launcherStatusEffects[2]);
+        launcher.maxScatter = defaultValues.baseMaxScatter + (0.5f * launcherStatusEffects[3]);
+        launcher.projectileHeight = defaultValues.baseProjectileHeight * Mathf.Pow(1.5f, launcherStatusEffects[4]);
+        launcher.regenerationTime = defaultValues.baseRegenerationTime * Mathf.Max(1.0f, 1.5f * launcherStatusEffects[5]);
+
+        launcher.regenActive = launcherStatusEffects[5] >= 3;
+        #endregion
     }
 
     #region limbDamageHandlers
@@ -200,15 +274,15 @@ public class DamageHandler : MonoBehaviour, IDamagable
             if (randomRoll > 145) { LowerArmor(); UpdateDamageEffects(); return; }
             if (randomRoll > 130) { FlickerLeftLight(); return; }
             if(randomRoll > 115) { FlickerRightLight(); return; }
-            if(randomRoll > 95) { LowerShieldMax(); return; }
+            if(randomRoll > 95) { LowerShieldMax(); UpdateDamageEffects(); return; }
             if(randomRoll > 85) { FlickerRight(); return; }
-            if (randomRoll > 75) { LowerShieldMax(); return; }
+            if (randomRoll > 75) { LowerShieldMax(); UpdateDamageEffects(); return; }
             if (randomRoll > 65) { FlickerMiddle(); return; }            
-            if (randomRoll > 60) { DisableLeftLight(); return; }
-            if(randomRoll > 55) { DisableRightLight(); return; }
+            if (randomRoll > 60) { DisableLeftLight(); UpdateDamageEffects(); return; }
+            if(randomRoll > 55) { DisableRightLight(); UpdateDamageEffects(); return; }
             if(randomRoll > 40) { LowerArmor(); return; }
             if (randomRoll > 30) { FlickerLeft(); return; }
-            if (randomRoll > 20) { LowerShieldMax(); return; }
+            if (randomRoll > 20) { LowerShieldMax(); UpdateDamageEffects(); return; }
             ReactorMeltdown();
         }
     }
@@ -287,7 +361,7 @@ public class DamageHandler : MonoBehaviour, IDamagable
 
         torsoStatusEffects[5]++;
         torsoStatusEffects[3]++;
-        leftLightObject.SetActive(false);
+        
         AddStatusEffect("Left Spotlight Destroyed");
     }
 
@@ -298,7 +372,7 @@ public class DamageHandler : MonoBehaviour, IDamagable
 
         torsoStatusEffects[6]++;
         torsoStatusEffects[4]++;
-        rightLightObject.SetActive(false);
+        
         AddStatusEffect("Right Spotlight Destroyed");
     }
 
@@ -308,14 +382,6 @@ public class DamageHandler : MonoBehaviour, IDamagable
         if(!systemDamage.isPlaying){systemDamage.Play();}
 
         torsoStatusEffects[7]++;
-
-        currentShieldMax -= shieldMax / 4;
-
-        if(currentShieldMax <= 0)
-        {
-            currentShieldMax = 0;
-            torsoStatusEffects[7] = 4;         
-        }
 
         switch(torsoStatusEffects[7])
         {
@@ -354,14 +420,14 @@ public class DamageHandler : MonoBehaviour, IDamagable
             if(!systemDamage.isPlaying){systemDamage.Play();}
             float randomRoll = Random.Range(0, 100) + (currentArmHealth / maxArmHealth * 100);
 
-            if(randomRoll > 90) { IncreaseReloadTime(); return; }
-            if(randomRoll > 85) { DamageBarrel(); return; }
-            if(randomRoll > 75) { HalveClipSize(); return; }
-            if(randomRoll > 65) { HalveFireRate(); return; }
-            if(randomRoll > 55) { DamageBarrel(); return; }
-            if(randomRoll > 45) { IncreaseBulletSpread(); return; }
-            if(randomRoll > 20) { HalveFireRate(); return; }
-            DamageBarrel();
+            if(randomRoll > 90) { IncreaseReloadTime(); UpdateDamageEffects(); return; }
+            if(randomRoll > 85) { DamageBarrel(); UpdateDamageEffects(); return; }
+            if(randomRoll > 75) { HalveClipSize(); UpdateDamageEffects(); return; }
+            if(randomRoll > 65) { HalveFireRate(); UpdateDamageEffects(); return; }
+            if(randomRoll > 55) { DamageBarrel(); UpdateDamageEffects(); return; }
+            if(randomRoll > 45) { IncreaseBulletSpread(); UpdateDamageEffects(); return; }
+            if(randomRoll > 20) { HalveFireRate(); UpdateDamageEffects(); return; }
+            DamageBarrel(); UpdateDamageEffects();
         }
     }
 
@@ -370,7 +436,7 @@ public class DamageHandler : MonoBehaviour, IDamagable
         int barrel = Random.Range(0, 3);
         if(armStatusEffects[barrel] > 2) { return; }
         armStatusEffects[barrel]++;
-        player.barrelFireChances[barrel] = Mathf.Max(player.barrelFireChances[barrel] - 0.25f * armStatusEffects[barrel], 0.0f);
+
         if(!systemDamage.isPlaying){systemDamage.Play();}
 
         switch (barrel)
@@ -400,7 +466,7 @@ public class DamageHandler : MonoBehaviour, IDamagable
         if(!systemDamage.isPlaying){systemDamage.Play();}
 
         armStatusEffects[3]++;
-        player.fireRate /= 2;
+        
         switch(armStatusEffects[3])
         {
             case 1: AddStatusEffect("Gun motor snagging"); break;
@@ -415,7 +481,7 @@ public class DamageHandler : MonoBehaviour, IDamagable
         if(!systemDamage.isPlaying){systemDamage.Play();}
 
         armStatusEffects[4]++;
-        player.reloadTime += 0.25f * armStatusEffects[4];
+        
         switch (armStatusEffects[4])
         {
             case 1: AddStatusEffect("Magazine holder misaligned"); break;
@@ -431,7 +497,7 @@ public class DamageHandler : MonoBehaviour, IDamagable
         if(!systemDamage.isPlaying){systemDamage.Play();}
 
         armStatusEffects[5]++;
-        player.bulletMaxSpread *= 2;
+
         AddStatusEffect("Targeting mechanisms failing");
     }
 
@@ -441,7 +507,7 @@ public class DamageHandler : MonoBehaviour, IDamagable
         if(!systemDamage.isPlaying){systemDamage.Play();}
 
         armStatusEffects[6]++;
-        player.maxClipSize /= 2;
+
         switch (armStatusEffects[6])
         {
             case 1: AddStatusEffect("Secondary clip feed broken"); break;
@@ -466,10 +532,10 @@ public class DamageHandler : MonoBehaviour, IDamagable
 
             float randomRoll = Random.Range(0, 100) + (currentLeftLegHealth / maxLegHealth * 100);
             if(randomRoll > 100) { return; }
-            if (randomRoll > 75) { HalveMoveSpeed(0); return; }
-            if(randomRoll > 40) { DoubleStepTime(0); return; }
-            if(randomRoll > 10) { ImpairRotation(0); return; }
-            BreakLeg(0);
+            if (randomRoll > 75) { HalveMoveSpeed(0); UpdateDamageEffects(); return; }
+            if(randomRoll > 40) { DoubleStepTime(0); UpdateDamageEffects(); return; }
+            if(randomRoll > 10) { ImpairRotation(0); UpdateDamageEffects(); return; }
+            BreakLeg(0); UpdateDamageEffects();
         }
     }
 
@@ -483,10 +549,10 @@ public class DamageHandler : MonoBehaviour, IDamagable
 
             float randomRoll = Random.Range(0, 100) + (currentRightLegHealth / maxLegHealth * 100);
             if (randomRoll > 100) { return; }
-            if (randomRoll > 75) { HalveMoveSpeed(1); return; }
-            if (randomRoll > 40) { DoubleStepTime(1); return; }
-            if (randomRoll > 10) { ImpairRotation(1); return; }
-            BreakLeg(1);
+            if (randomRoll > 75) { HalveMoveSpeed(1); UpdateDamageEffects(); return; }
+            if (randomRoll > 40) { DoubleStepTime(1); UpdateDamageEffects(); return; }
+            if (randomRoll > 10) { ImpairRotation(1); UpdateDamageEffects(); return; }
+            BreakLeg(1); UpdateDamageEffects();
         }
     }
 
@@ -496,7 +562,7 @@ public class DamageHandler : MonoBehaviour, IDamagable
         if(!systemDamage.isPlaying){systemDamage.Play();}
 
         legStatusEffects[leg][0]++;
-        player.legMoveSpeeds[leg] /= 1.5f;
+
         string legName = string.Empty;
         if(leg == 0) { legName = "Left leg"; } else { legName = "Right leg"; }
         switch(legStatusEffects[leg][0])
@@ -513,7 +579,7 @@ public class DamageHandler : MonoBehaviour, IDamagable
         if(!systemDamage.isPlaying){systemDamage.Play();}
 
         legStatusEffects[leg][1]++;
-        player.legStepTimes[leg] *= 1.5f;
+
         string legName = string.Empty;
         if (leg == 0) { legName = "Left leg"; } else { legName = "Right leg"; }
         switch (legStatusEffects[leg][1])
@@ -530,20 +596,26 @@ public class DamageHandler : MonoBehaviour, IDamagable
         if(!systemDamage.isPlaying){systemDamage.Play();}
 
         legStatusEffects[leg][2]++;
-        player.PlayerRotationSpeed /= 2;
+
         AddStatusEffect("Rotation servos damaged");
     }
 
     void BreakLeg(int leg)
     {
-        if (legStatusEffects[leg][3] > 0) { return; }
-        if(!systemDamage.isPlaying){systemDamage.Play();}
+        //if (legStatusEffects[leg][3] > 0) { return; }
+        //if(!systemDamage.isPlaying){systemDamage.Play();}
 
-        legStatusEffects[leg][3]++;
-        legStatusEffects[leg][2] = 10;
-        legStatusEffects[leg][1] = 10;
-        legStatusEffects[leg][0] = 10;
-        player.legMoveSpeeds[leg] = 0;
+        //legStatusEffects[leg][3]++;
+        //legStatusEffects[leg][2] = 10;
+        //legStatusEffects[leg][1] = 10;
+        //legStatusEffects[leg][0] = 10;
+        //player.legMoveSpeeds[leg] = 0;
+
+        if (legStatusEffects[leg][0] > 2) { return; }
+        if (legStatusEffects[leg][0] < 2) { HalveMoveSpeed(leg); return; }
+
+        legStatusEffects[leg][0] = 3;
+
         string legName = string.Empty;
         if (leg == 0) { legName = "Left leg"; } else { legName = "Right leg"; }
         AddStatusEffect(legName = " disabled");
@@ -582,7 +654,6 @@ public class DamageHandler : MonoBehaviour, IDamagable
         if(!systemDamage.isPlaying){systemDamage.Play();}
 
         launcherStatusEffects[0]++;
-        launcher.barrelRotateTime *= 2;
         switch(launcherStatusEffects[0])
         {
             case 1: AddStatusEffect("Launcher drum motor damaged"); break;
@@ -598,7 +669,6 @@ public class DamageHandler : MonoBehaviour, IDamagable
         if(!systemDamage.isPlaying){systemDamage.Play();}
 
         launcherStatusEffects[1]++;
-        launcher.unloadTime *= 2;
         switch (launcherStatusEffects[1])
         {
             case 1: AddStatusEffect("Launcher unload rail warped"); break;
@@ -613,7 +683,6 @@ public class DamageHandler : MonoBehaviour, IDamagable
         if(!systemDamage.isPlaying){systemDamage.Play();}
 
         launcherStatusEffects[2]++;
-        launcher.loadTime *= 2;
         switch (launcherStatusEffects[2])
         {
             case 1: AddStatusEffect("Launcher loading mechanism damaged"); break;
@@ -627,7 +696,6 @@ public class DamageHandler : MonoBehaviour, IDamagable
         if(!systemDamage.isPlaying){systemDamage.Play();}
 
         launcherStatusEffects[3]++;
-        launcher.maxScatter += 0.5f;
         switch (launcherStatusEffects[3])
         {
             case 1: AddStatusEffect("Launcher barrel misaligned"); break;
@@ -643,7 +711,6 @@ public class DamageHandler : MonoBehaviour, IDamagable
         if(!systemDamage.isPlaying){systemDamage.Play();}
 
         launcherStatusEffects[4]++;
-        launcher.projectileHeight *= 1.5f;
         switch (launcherStatusEffects[4])
         {
             case 1: AddStatusEffect("Launcher vertical stabalizer bent"); break;
@@ -657,7 +724,6 @@ public class DamageHandler : MonoBehaviour, IDamagable
         if(!systemDamage.isPlaying){systemDamage.Play();}
 
         launcherStatusEffects[5]++;
-        launcher.regenerationTime *= 1.0f + 0.5f*launcherStatusEffects[5];
         switch (launcherStatusEffects[5])
         {
             case 1: AddStatusEffect("Grenade generator leaking"); break;
@@ -668,12 +734,11 @@ public class DamageHandler : MonoBehaviour, IDamagable
 
     void DestroyRegenerator()
     {
-        if (launcherStatusEffects[6] > 0) { return; }
+        if (launcherStatusEffects[5] > 2) { return; }
+        if (launcherStatusEffects[5] < 2) { IncreaseRegenerationTime(); return; }
         if(!systemDamage.isPlaying){systemDamage.Play();}
 
-        launcherStatusEffects[6]++;
-        launcherStatusEffects[5] = 2;
-        launcher.regenActive = false;
+        launcherStatusEffects[5] = 3;
         switch (launcherStatusEffects[6])
         {
             case 1: AddStatusEffect("Grenade generator broken"); break;

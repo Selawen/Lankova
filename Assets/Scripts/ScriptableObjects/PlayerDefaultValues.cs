@@ -8,7 +8,7 @@ public class PlayerDefaultValues : ScriptableObject
     [Header("Movement")]
     public float baseMoveSpeed = 1.5f;
     public float baseStepTime = 0.5f, baseNormalRotationSpeed = 20;
-    public float[] legMoveSpeeds = {2.0f,2.0f}, baseLegStepTimes = {0.25f, 0.25f};
+    public float[] baseLegMoveSpeeds = {2.0f,2.0f}, baseLegStepTimes = {0.25f, 0.25f};
     public float baseBopHeight = 0.1f, baseSprintMultiplier = 3.0f;
 
     [Header("Shooting")]

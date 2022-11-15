@@ -131,7 +131,7 @@ public class PlayerMovement : MonoBehaviour
         moveSpeed = defaultValues.baseMoveSpeed;
         stepTime = defaultValues.baseStepTime;
         normalPlayerRotationSpeed = defaultValues.baseNormalRotationSpeed;
-        System.Array.Copy(defaultValues.legMoveSpeeds, legMoveSpeeds, legMoveSpeeds.Length);
+        System.Array.Copy(defaultValues.baseLegMoveSpeeds, legMoveSpeeds, legMoveSpeeds.Length);
         System.Array.Copy(defaultValues.baseLegStepTimes, legStepTimes, legStepTimes.Length);
         bopHeight = defaultValues.baseBopHeight;
         sprintMovementMultiplier = defaultValues.baseSprintMultiplier;
