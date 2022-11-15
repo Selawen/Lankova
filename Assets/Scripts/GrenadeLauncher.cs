@@ -7,6 +7,8 @@ public class GrenadeLauncher : MonoBehaviour
 {
     enum GrenadeType { None = -1, Frag = 0, Flash = 1, Smoke = 2, AP = 3}
 
+    public PlayerDefaultValues defaultValues;
+
     [Header("Game Objects")]
     public GameObject launcherPivot;
     public Transform grenadeSpawn, inBarrel;
@@ -16,12 +18,12 @@ public class GrenadeLauncher : MonoBehaviour
     public GameObject[] dummies;
 
     [Header("Stats")]
-    public float projectileHeight = 0.1f;
-    public float barrelRotateTime = 0.25f, unloadTime = 0.5f, loadTime = 0.5f;
-    public float regenerationTime = 30.0f;
-    public int[] grenadeMaxAmmo, grenadeCurrentAmmo;
-    public float maxScatter;
-    public bool regenActive = true;
+    [HideInInspector] public float projectileHeight = 0.1f;
+    [HideInInspector] public float barrelRotateTime = 0.25f, unloadTime = 0.5f, loadTime = 0.5f;
+    [HideInInspector] public float regenerationTime = 30.0f;
+    [HideInInspector] public int[] grenadeMaxAmmo, grenadeCurrentAmmo;
+    [HideInInspector] public float maxScatter;
+    [HideInInspector] public bool regenActive = true;
 
     [Header("UI Elements")]
     public GameObject[] currentGrenadeIcons;
@@ -55,6 +57,8 @@ public class GrenadeLauncher : MonoBehaviour
     DamageHandler dh;
     private void Start()
     {
+        LoadSettings();
+
         player = GetComponent<PlayerMovement>();
         dh = GetComponent<DamageHandler>();
         currentBarrel = 0;
@@ -90,6 +94,18 @@ public class GrenadeLauncher : MonoBehaviour
         if (Time.timeScale <= 0.0f) { return; }
 
         AimBarrel();
+    }
+
+    public void LoadSettings()
+    {
+        projectileHeight = defaultValues.baseProjectileHeight;
+        barrelRotateTime = defaultValues.baseBarrelRotateTime;
+        unloadTime = defaultValues.baseUnloadTime;
+        loadTime = defaultValues.baseLoadTime;
+        regenerationTime = defaultValues.baseRegenerationTime;
+        System.Array.Copy(defaultValues.baseGrenadeMaxAmmo, grenadeMaxAmmo, grenadeMaxAmmo.Length);
+        maxScatter = defaultValues.baseMaxScatter;
+        regenActive = defaultValues.baseRegenActive;
     }
 
     public void BootUp()

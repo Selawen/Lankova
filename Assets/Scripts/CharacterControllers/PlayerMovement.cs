@@ -10,24 +10,26 @@ public class PlayerMovement : MonoBehaviour
     Rigidbody rb;
 
     #region field hell
+    public PlayerDefaultValues defaultValues;
+
     [Header("Movement")]
-    public bool grounded;
-    public float moveSpeed, stepTime, normalPlayerRotationSpeed;
-    public float[] legMoveSpeeds, legStepTimes;
+    [HideInInspector]public bool grounded;
+    [HideInInspector] public float moveSpeed, stepTime, normalPlayerRotationSpeed;
+    [HideInInspector] public float[] legMoveSpeeds, legStepTimes;
     float playerRotationSpeed;
     public float PlayerRotationSpeed
     {
         get { return playerRotationSpeed; }
         set { playerRotationSpeed = value; GetComponentInChildren<MechTurning>().rotationSpeed = playerRotationSpeed; }
     }
-    public float bopHeight, sprintMovementMultiplier;    
+    [HideInInspector] public float bopHeight, sprintMovementMultiplier;    
     bool moving;
 
     [Header("Shooting")]
-    public float fireRate;
-    public float bulletAmount, bulletMaxSpread, sprintSpreadMultiplier;
-    public float recoilAmount, recoilTimeBack, recoilTimeForward;
-    public int maxClipSize = 30;
+    [HideInInspector] public float fireRate;
+    [HideInInspector] public float bulletAmount, bulletMaxSpread, sprintSpreadMultiplier;
+    [HideInInspector] public float recoilAmount, recoilTimeBack, recoilTimeForward;
+    [HideInInspector] public int maxClipSize = 30;
     int currentClip;
     int CurrentClip { 
         get
@@ -40,7 +42,7 @@ public class PlayerMovement : MonoBehaviour
             ammoCounter.text = currentClip.ToString();
         }
     }
-    public float reloadTime;
+    [HideInInspector] public float reloadTime;
     bool shooting;
     Vector3 gunBarrelOrig;
     public LayerMask gunPointerLayers;
@@ -78,6 +80,8 @@ public class PlayerMovement : MonoBehaviour
 
     private void Start()
     {
+        LoadDefaults();
+
         Cursor.lockState = CursorLockMode.Confined;
         rb = GetComponent<Rigidbody>();
         barrelFireChances = new float[] { 1.0f, 1.0f, 1.0f };
@@ -93,7 +97,7 @@ public class PlayerMovement : MonoBehaviour
         //StartCoroutine(Movement());
         //StartCoroutine(Shoot());
         gunBarrelOrig = gun.transform.localPosition;
-        CurrentClip = maxClipSize;
+        CurrentClip = maxClipSize;       
     }
 
     private void Update()
@@ -119,6 +123,28 @@ public class PlayerMovement : MonoBehaviour
 
     void HandleInput()
     {
+    }
+
+    public void LoadDefaults()
+    {
+        //Movement
+        moveSpeed = defaultValues.baseMoveSpeed;
+        stepTime = defaultValues.baseStepTime;
+        normalPlayerRotationSpeed = defaultValues.baseNormalRotationSpeed;
+        System.Array.Copy(defaultValues.legMoveSpeeds, legMoveSpeeds, legMoveSpeeds.Length);
+        System.Array.Copy(defaultValues.baseLegStepTimes, legStepTimes, legStepTimes.Length);
+        bopHeight = defaultValues.baseBopHeight;
+        sprintMovementMultiplier = defaultValues.baseSprintMultiplier;
+
+        //Shooting
+        fireRate = defaultValues.baseFireRate;
+        bulletAmount = defaultValues.baseBulletAmount;
+        bulletMaxSpread = defaultValues.baseBulletMaxSpread;
+        sprintSpreadMultiplier = defaultValues.baseSprintSpreadMultiplier;
+        recoilAmount = defaultValues.baseRecoilAmoint;
+        recoilTimeBack = defaultValues.baseRecoilTimeBack;
+        recoilTimeForward = defaultValues.baseRecoilTimeForward;
+        reloadTime = defaultValues.baseReloadTime;
     }
 
     private void OnCollisionEnter(Collision collision)

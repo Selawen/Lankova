@@ -8,7 +8,7 @@ public class PlayerDefaultValues : ScriptableObject
     [Header("Movement")]
     public float baseMoveSpeed = 1.5f;
     public float baseStepTime = 0.5f, baseNormalRotationSpeed = 20;
-    public float[] legMoveSpeeds = {2.0f,2.0f}, legStepTimes = {0.25f, 0.25f};
+    public float[] legMoveSpeeds = {2.0f,2.0f}, baseLegStepTimes = {0.25f, 0.25f};
     public float baseBopHeight = 0.1f, baseSprintMultiplier = 3.0f;
 
     [Header("Shooting")]
@@ -24,4 +24,9 @@ public class PlayerDefaultValues : ScriptableObject
     public int[] baseGrenadeMaxAmmo = { 2, 4, 3, 2 };
     public float baseMaxScatter = 0.0f;
     public bool baseRegenActive = true;
+
+    [Header("DamageHandler")]
+    public float baseShieldMax = 100;
+    public float baseMinimumShieldRechargeAmount = 5, baseShieldRechargePenalty = 5, baseTorsoArmor = 3, 
+        baseMaxTorsoHealth = 200, baseMaxLegHealth= 100, baseMaxArmHealth = 100, baseMaxLauncherHealth = 100, baseEMPTime = 9;
 }

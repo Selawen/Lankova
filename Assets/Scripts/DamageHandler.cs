@@ -5,14 +5,16 @@ using UnityEngine.UI;
 
 public class DamageHandler : MonoBehaviour, IDamagable
 {
+    public PlayerDefaultValues defaultValues;
+
     PlayerMovement player;
     GrenadeLauncher launcher;
     public GameObject deathPanel;
 
     [Header("Stats")]
-    public float shieldMax = 100;
-    public float minimumShieldRechargeAmount = 5, shieldRechargePenalty = 10;
-    public float torsoArmor = 3;
+    [HideInInspector] public float shieldMax = 100;
+    [HideInInspector] public float minimumShieldRechargeAmount = 5, shieldRechargePenalty = 10;
+    [HideInInspector] public float torsoArmor = 3;
     float currentShieldMax;
     float currentShield;
     public float CurrentShield
@@ -50,8 +52,8 @@ public class DamageHandler : MonoBehaviour, IDamagable
         }
     }
 
-    public float maxTorsoHealth = 200, maxLegHealth = 100, maxArmHealth = 100, maxLauncherHealth = 100;
-    public float empTime;
+    [HideInInspector] public float maxTorsoHealth = 200, maxLegHealth = 100, maxArmHealth = 100, maxLauncherHealth = 100;
+    [HideInInspector] public float empTime;
 
     float currentTorsoHealth;
     float currentArmHealth;
@@ -109,6 +111,8 @@ public class DamageHandler : MonoBehaviour, IDamagable
     // Start is called before the first frame update
     void Start()
     {
+        LoadSettings();
+
         bootedUp = false;
         player = GetComponent<PlayerMovement>();
         launcher = GetComponent<GrenadeLauncher>();
@@ -147,6 +151,19 @@ public class DamageHandler : MonoBehaviour, IDamagable
     {
     }
 
+    void LoadSettings()
+    {
+        shieldMax = defaultValues.baseShieldMax;
+        minimumShieldRechargeAmount = defaultValues.baseMinimumShieldRechargeAmount;
+        shieldRechargePenalty = defaultValues.baseShieldRechargePenalty;
+        torsoArmor = defaultValues.baseTorsoArmor;
+        maxTorsoHealth = defaultValues.baseMaxTorsoHealth;
+        maxLegHealth = defaultValues.baseMaxLegHealth;
+        maxArmHealth = defaultValues.baseMaxArmHealth;
+        maxLauncherHealth = defaultValues.baseMaxLauncherHealth;
+        empTime = defaultValues.baseEMPTime;
+    }
+
     IEnumerator ShieldRecharge()
     {
         while(true)
@@ -161,7 +178,10 @@ public class DamageHandler : MonoBehaviour, IDamagable
         }
     }
 
-
+    void UpdateDamageEffects()
+    {
+        torsoArmor = defaultValues.baseTorsoArmor - torsoStatusEffects[9];
+    }
 
     #region limbDamageHandlers
 
@@ -177,7 +197,7 @@ public class DamageHandler : MonoBehaviour, IDamagable
         {
             float randomRoll = Random.Range(0, 100) + Mathf.Min(currentTorsoHealth, 100);
             //Fancy Damage Effects go Here;
-            if (randomRoll > 145) { LowerArmor(); return; }
+            if (randomRoll > 145) { LowerArmor(); UpdateDamageEffects(); return; }
             if (randomRoll > 130) { FlickerLeftLight(); return; }
             if(randomRoll > 115) { FlickerRightLight(); return; }
             if(randomRoll > 95) { LowerShieldMax(); return; }
@@ -195,9 +215,10 @@ public class DamageHandler : MonoBehaviour, IDamagable
 
     void LowerArmor()
     {
-        if(torsoStatusEffects[9] > 0) { return; }
-        torsoArmor--;
-        if(torsoArmor <= 0) { torsoStatusEffects[9] = 1; }
+        if(torsoStatusEffects[9] > defaultValues.baseTorsoArmor) { return; }
+        
+        //if(torsoArmor <= 0) { torsoStatusEffects[9] = 1; }
+        torsoStatusEffects[9]++;
         if(!systemDamage.isPlaying){systemDamage.Play();}
 
         switch (torsoArmor)

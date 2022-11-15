@@ -55809,6 +55809,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4caff6829e5f2e3449ad02e3d3bb5966, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  defaultValues: {fileID: 11400000, guid: 9a0d12506776e334eb2c70f883107cee, type: 2}
   deathPanel: {fileID: 1980190469}
   shieldMax: 100
   minimumShieldRechargeAmount: 5
@@ -55882,6 +55883,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e672b1ded017ac4e8f141386e011266, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  defaultValues: {fileID: 11400000, guid: 9a0d12506776e334eb2c70f883107cee, type: 2}
   launcherPivot: {fileID: 21043429}
   grenadeSpawn: {fileID: 1764793085}
   inBarrel: {fileID: 1336000690}
@@ -56009,6 +56011,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 84b2b663e3cd2554daeb66090ca5d153, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  defaultValues: {fileID: 11400000, guid: 9a0d12506776e334eb2c70f883107cee, type: 2}
   grounded: 0
   moveSpeed: 1.5
   stepTime: 0.5
