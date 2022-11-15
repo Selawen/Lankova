@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dda283c82f1c6434ca5c5d2b967660e2, type: 3}
+  m_Name: PlayerDefaultValues
+  m_EditorClassIdentifier: 
+  baseMoveSpeed: 1.5
+  baseStepTime: 0.5
+  baseNormalRotationSpeed: 20
+  legMoveSpeeds:
+  - 2
+  - 2
+  legStepTimes:
+  - 0.25
+  - 0.25
+  baseBopHeight: 0.1
+  baseSprintMultiplier: 3
+  baseFireRate: 3
+  baseBulletAmount: 12
+  baseBulletMaxSpread: 0.05
+  baseSprintSpreadMultiplier: 4
+  baseRecoilAmoint: 0.15
+  baseRecoilTimeBack: 0.02
+  baseRecoilTimeForward: 0.13
+  baseMaxClipSize: 60
+  baseReloadTime: 3
+  baseProjectileHeight: 0.1
+  baseBarrelRotateTime: 0.25
+  baseUnloadTime: 0.5
+  baseLoadTime: 0.5
+  baseRegenerationTime: 30
+  baseGrenadeMaxAmmo: 02000000040000000300000002000000
+  baseMaxScatter: 0
+  baseRegenActive: 1

@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &268655558151625444
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2014895066562517954, guid: 6c49bab7ab03d3845ad5815aa03ffdb6, type: 3}
+      propertyPath: spawnOnImpact.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2014895066562517954, guid: 6c49bab7ab03d3845ad5815aa03ffdb6, type: 3}
+      propertyPath: spawnOnImpact.Array.data[0]
+      value: 
+      objectReference: {fileID: 8957628740981747024, guid: 35fe9969807d09546b7af4a1fa44f103, type: 3}
+    - target: {fileID: 2014895066562517954, guid: 6c49bab7ab03d3845ad5815aa03ffdb6, type: 3}
+      propertyPath: spawnOnImpact.Array.data[1]
+      value: 
+      objectReference: {fileID: 1967904499634299729, guid: 1670c7b050efe414481f877f53581ea0, type: 3}
+    - target: {fileID: 2014895066562517954, guid: 6c49bab7ab03d3845ad5815aa03ffdb6, type: 3}
+      propertyPath: spawnOnImpact.Array.data[2]
+      value: 
+      objectReference: {fileID: 1938867414256148397, guid: 924f1f228e8ff4d4589c28d9e0179ba9, type: 3}
+    - target: {fileID: 2014895066562517955, guid: 6c49bab7ab03d3845ad5815aa03ffdb6, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2014895066562517955, guid: 6c49bab7ab03d3845ad5815aa03ffdb6, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2014895066562517955, guid: 6c49bab7ab03d3845ad5815aa03ffdb6, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2014895066562517955, guid: 6c49bab7ab03d3845ad5815aa03ffdb6, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2014895066562518012, guid: 6c49bab7ab03d3845ad5815aa03ffdb6, type: 3}
+      propertyPath: m_Name
+      value: FlashGrenade Variant
+      objectReference: {fileID: 0}
+    - target: {fileID: 2014895067235296825, guid: 6c49bab7ab03d3845ad5815aa03ffdb6, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: b02d2e4f9e3974347bd823511b26e7f1, type: 2}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 6c49bab7ab03d3845ad5815aa03ffdb6, type: 3}
