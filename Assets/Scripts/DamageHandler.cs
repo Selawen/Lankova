@@ -11,6 +11,7 @@ public class DamageHandler : MonoBehaviour, IDamagable
     GrenadeLauncher launcher;
     public GameObject deathPanel;
 
+    #region STATS
     [Header("Stats")]
     [HideInInspector] public float shieldMax = 100;
     [HideInInspector] public float minimumShieldRechargeAmount = 5, shieldRechargePenalty = 10;
@@ -25,24 +26,24 @@ public class DamageHandler : MonoBehaviour, IDamagable
         }
         set
         {
-            if(value < currentShield) { StartCoroutine(FlashShieldOutline(damagedColor)); }
+            if (value < currentShield) { StartCoroutine(FlashShieldOutline(damagedColor)); }
             currentShield = Mathf.Clamp(value, 0, currentShieldMax);
             float shieldIncrement = shieldMax / shieldBars.Length;
-            int currentBar = Mathf.Min((int)(currentShield / shieldIncrement),4);
+            int currentBar = Mathf.Min((int)(currentShield / shieldIncrement), 4);
 
             if (!bootedUp) { return; }
 
             for (int i = 0; i < 5; i++)
             {
                 shieldBars[i].gameObject.SetActive(i * shieldIncrement < currentShield);
-                if(i == currentBar) 
-                { 
-                    shieldBars[i].color = Color.Lerp(shieldHealthyColor, damagedColor, 1.0f-((int)(currentShield-1)%(int)shieldIncrement)/shieldIncrement); 
+                if (i == currentBar)
+                {
+                    shieldBars[i].color = Color.Lerp(shieldHealthyColor, damagedColor, 1.0f - ((int)(currentShield - 1) % (int)shieldIncrement) / shieldIncrement);
                 }
                 else { shieldBars[i].color = shieldHealthyColor; }
             }
-            if(currentShield <= shieldMax / 4 && !shieldWasLow) { shieldLowSound.Play(); }
-            if(currentShield <= 0 && !shieldWasDown) { shieldDownSound.Play(); }
+            if (currentShield <= shieldMax / 4 && !shieldWasLow) { shieldLowSound.Play(); }
+            if (currentShield <= 0 && !shieldWasDown) { shieldDownSound.Play(); }
 
             shieldExclamationPoint.gameObject.SetActive(currentShield <= 0);
             shieldsDown.gameObject.SetActive(currentShield <= 0);
@@ -60,7 +61,9 @@ public class DamageHandler : MonoBehaviour, IDamagable
     float currentLeftLegHealth;
     float currentRightLegHealth;
     float currentLauncherHealth;
+    #endregion
 
+    #region GAMEOBJECTSETC
     [Header("UI Elements")]
     public Image shieldExclamationPoint;
     public Image shieldOutline;
@@ -93,6 +96,7 @@ public class DamageHandler : MonoBehaviour, IDamagable
     [Header("AudioSources")]
     public AudioSource systemDamage;
     public AudioSource warningSiren, shieldLowSound, shieldDownSound, shieldRechargeSound;
+    #endregion
 
     [Header("Other")]
     public float flickerMinTime = 1.5f;
@@ -103,10 +107,12 @@ public class DamageHandler : MonoBehaviour, IDamagable
     int[][] legStatusEffects;
 
     List<string> statusEffects;
-    bool shieldFlashing = false, torsoFlashing = false, armFlashing = false, leftLegFlashing = false, 
+    bool shieldFlashing = false, torsoFlashing = false, armFlashing = false, leftLegFlashing = false,
         rightLegFlashing = false, launcherFlashing = false, EMPd = false, bootedUp = false;
     bool shieldWasDown, shieldWasLow;
     float timeSinceLastDamaged;
+
+    Coroutine lightLeftFlickerRoutine, lightRightFlickerRoutine, uiLeftFlickerRoutine, uiRightFlickerRoutine, uiMiddleFlickerRoutine;
 
     // Start is called before the first frame update
     void Start()
@@ -127,9 +133,9 @@ public class DamageHandler : MonoBehaviour, IDamagable
         UpdateStatusEffects();
 
         torsoStatusEffects = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        armStatusEffects = new int[] { 0, 0, 0, 0, 0, 0, 0};
-        launcherStatusEffects = new int[] { 0, 0, 0, 0, 0, 0};
-        legStatusEffects = new int[][] { new int[]{ 0,0,0}, new int[]{ 0, 0, 0} };
+        armStatusEffects = new int[] { 0, 0, 0, 0, 0, 0, 0 };
+        launcherStatusEffects = new int[] { 0, 0, 0, 0, 0, 0 };
+        legStatusEffects = new int[][] { new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 } };
 
         StartCoroutine(ShieldRecharge());
 
@@ -149,6 +155,15 @@ public class DamageHandler : MonoBehaviour, IDamagable
 
     void DebugUpdate()
     {
+        if(Input.GetKeyDown(KeyCode.T))
+        {
+            HalveMoveSpeed(0); UpdateDamageEffects();
+        }
+
+        if(Input.GetKeyDown(KeyCode.R))
+        {
+            RepairMoveSpeed(0); UpdateDamageEffects();
+        }
     }
 
     void LoadSettings()
@@ -166,10 +181,10 @@ public class DamageHandler : MonoBehaviour, IDamagable
 
     IEnumerator ShieldRecharge()
     {
-        while(true)
+        while (true)
         {
             yield return new WaitForSeconds(1.0f);
-            if(CurrentShield == currentShieldMax || currentShieldMax <= 0 || timeSinceLastDamaged < shieldRechargePenalty) 
+            if (CurrentShield == currentShieldMax || currentShieldMax <= 0 || timeSinceLastDamaged < shieldRechargePenalty)
             { shieldRechargeIcon.SetActive(false); continue; }
             shieldRechargeIcon.SetActive(true);
             StartCoroutine(FlashShieldOutline(componentHealthyColor));
@@ -178,13 +193,56 @@ public class DamageHandler : MonoBehaviour, IDamagable
         }
     }
 
-    //Going to ignore Flickering stuff for now, since that is an absolute pain in the ass to fix because not every object should be turned on
-        //It's going to take some kind of check for each flicker target which checks/updates EVERY object on it. I hate everything. EVERYTHING.
     void UpdateDamageEffects()
     {
         #region TORSO
-        leftLightObject.SetActive(torsoStatusEffects[5] > 0);
-        rightLightObject.SetActive(torsoStatusEffects[6] > 0);
+        if(torsoStatusEffects[0] > 0)
+        {
+            if(uiLeftFlickerRoutine == null) { uiLeftFlickerRoutine = StartCoroutine(Flicker(leftCanvasBackground)); }
+        }
+        else
+        {
+            if(uiLeftFlickerRoutine != null) { StopCoroutine(uiLeftFlickerRoutine); uiLeftFlickerRoutine = null; StopFlicker(leftCanvasBackground); }
+        }
+        
+        if(torsoStatusEffects[1] > 0)
+        {
+            if(uiMiddleFlickerRoutine == null) { uiMiddleFlickerRoutine = StartCoroutine(Flicker(middleCanvasBackground)); }
+        }
+        else
+        {
+            if(uiMiddleFlickerRoutine != null) { StopCoroutine(uiMiddleFlickerRoutine); uiMiddleFlickerRoutine = null; StopFlicker(middleCanvasBackground); }
+        }        
+        
+        if(torsoStatusEffects[2] > 0)
+        {
+            if(uiRightFlickerRoutine == null) { uiRightFlickerRoutine = StartCoroutine(Flicker(rightCanvasBackground)); }
+        }
+        else
+        {
+            if(uiRightFlickerRoutine != null) { StopCoroutine(uiRightFlickerRoutine); uiRightFlickerRoutine = null; StopFlicker(rightCanvasBackground); }
+        }
+        
+        if (torsoStatusEffects[3] > 0)
+        {
+            if (lightLeftFlickerRoutine == null) { lightLeftFlickerRoutine = StartCoroutine(Flicker(leftLight)); }
+        }
+        else
+        {
+            if (lightLeftFlickerRoutine != null) { StopCoroutine(lightLeftFlickerRoutine); lightLeftFlickerRoutine = null; StopFlicker(leftLight); }
+        }
+
+        if (torsoStatusEffects[4] > 0)
+        {
+            if (lightRightFlickerRoutine == null) { lightRightFlickerRoutine = StartCoroutine(Flicker(rightLight)); }
+        }
+        else
+        {
+            if (lightRightFlickerRoutine != null) { StopCoroutine(lightRightFlickerRoutine); lightRightFlickerRoutine = null; StopFlicker(rightLight); }
+        }
+
+        leftLightObject.SetActive(torsoStatusEffects[5] == 0);
+        rightLightObject.SetActive(torsoStatusEffects[6] == 0);
 
         currentShieldMax = Mathf.Max(defaultValues.baseShieldMax * (1.0f - (torsoStatusEffects[7] * 0.25f)), 0);
 
@@ -207,7 +265,7 @@ public class DamageHandler : MonoBehaviour, IDamagable
         //player.fireRate = defaultValues.baseFireRate / (2 * armStatusEffects[3]);
         player.fireRate = defaultValues.baseFireRate / Mathf.Pow(2, armStatusEffects[3]);
 
-        switch(armStatusEffects[4])
+        switch (armStatusEffects[4])
         {
             case 0: player.reloadTime = defaultValues.baseReloadTime; break;
             case 1: player.reloadTime = defaultValues.baseReloadTime + 0.25f; break;
@@ -232,14 +290,14 @@ public class DamageHandler : MonoBehaviour, IDamagable
         for (int leg = 0; leg < 2; leg++)
         {
             player.legMoveSpeeds[leg] = defaultValues.baseLegMoveSpeeds[leg] / Mathf.Pow(1.5f, legStatusEffects[leg][0]);
-            if(legStatusEffects[leg][0] >= 3) { player.legMoveSpeeds[leg] = 0; }
+            if (legStatusEffects[leg][0] >= 3) { player.legMoveSpeeds[leg] = 0; }
 
             player.legStepTimes[leg] = defaultValues.baseLegStepTimes[leg] * Mathf.Pow(1.5f, legStatusEffects[leg][1]);
         }
 
         float newRotSpd = defaultValues.baseNormalRotationSpeed;
-        if(legStatusEffects[0][2] > 0) { newRotSpd /= 2; }
-        if(legStatusEffects[1][2] > 0) { newRotSpd /= 2; }
+        if (legStatusEffects[0][2] > 0) { newRotSpd /= 2; }
+        if (legStatusEffects[1][2] > 0) { newRotSpd /= 2; }
         player.PlayerRotationSpeed = newRotSpd;
 
         #endregion
@@ -267,21 +325,21 @@ public class DamageHandler : MonoBehaviour, IDamagable
         //torsoIndicator.color = Color.Lerp(damagedColor, componentHealthyColor, currentTorsoHealth / maxTorsoHealth);
         currentTorsoColor = Color.Lerp(damagedColor, componentHealthyColor, currentTorsoHealth / maxTorsoHealth);
         StartCoroutine(FlashTorsoIndicator(damagedColor));
-        if (Random.Range(0,maxTorsoHealth-1) > currentTorsoHealth)
+        if (Random.Range(0, maxTorsoHealth - 1) > currentTorsoHealth)
         {
             float randomRoll = Random.Range(0, 100) + Mathf.Min(currentTorsoHealth, 100);
             //Fancy Damage Effects go Here;
             if (randomRoll > 145) { LowerArmor(); UpdateDamageEffects(); return; }
-            if (randomRoll > 130) { FlickerLeftLight(); return; }
-            if(randomRoll > 115) { FlickerRightLight(); return; }
-            if(randomRoll > 95) { LowerShieldMax(); UpdateDamageEffects(); return; }
-            if(randomRoll > 85) { FlickerRight(); return; }
+            if (randomRoll > 130) { FlickerLeftLight(); UpdateDamageEffects(); return; }
+            if (randomRoll > 115) { FlickerRightLight(); UpdateDamageEffects(); return; }
+            if (randomRoll > 95) { LowerShieldMax(); UpdateDamageEffects(); return; }
+            if (randomRoll > 85) { FlickerRight(); UpdateDamageEffects(); return; }
             if (randomRoll > 75) { LowerShieldMax(); UpdateDamageEffects(); return; }
-            if (randomRoll > 65) { FlickerMiddle(); return; }            
+            if (randomRoll > 65) { FlickerMiddle(); UpdateDamageEffects(); return; }
             if (randomRoll > 60) { DisableLeftLight(); UpdateDamageEffects(); return; }
-            if(randomRoll > 55) { DisableRightLight(); UpdateDamageEffects(); return; }
-            if(randomRoll > 40) { LowerArmor(); return; }
-            if (randomRoll > 30) { FlickerLeft(); return; }
+            if (randomRoll > 55) { DisableRightLight(); UpdateDamageEffects(); return; }
+            if (randomRoll > 40) { LowerArmor(); UpdateDamageEffects(); return; }
+            if (randomRoll > 30) { FlickerLeft(); UpdateDamageEffects(); return; }
             if (randomRoll > 20) { LowerShieldMax(); UpdateDamageEffects(); return; }
             ReactorMeltdown();
         }
@@ -289,11 +347,11 @@ public class DamageHandler : MonoBehaviour, IDamagable
 
     void LowerArmor()
     {
-        if(torsoStatusEffects[9] > defaultValues.baseTorsoArmor) { return; }
-        
+        if (torsoStatusEffects[9] > defaultValues.baseTorsoArmor) { return; }
+
         //if(torsoArmor <= 0) { torsoStatusEffects[9] = 1; }
         torsoStatusEffects[9]++;
-        if(!systemDamage.isPlaying){systemDamage.Play();}
+        if (!systemDamage.isPlaying) { systemDamage.Play(); }
 
         switch (torsoArmor)
         {
@@ -307,83 +365,80 @@ public class DamageHandler : MonoBehaviour, IDamagable
     void FlickerLeft()
     {
         if (torsoStatusEffects[0] > 0) { return; }
-        if(!systemDamage.isPlaying){systemDamage.Play();}
+        if (!systemDamage.isPlaying) { systemDamage.Play(); }
 
         torsoStatusEffects[0]++;
-        StartCoroutine(Flicker(leftCanvasBackground));
         AddStatusEffect("Status HUD Damaged");
     }
-    
+
     void FlickerMiddle()
     {
         if (torsoStatusEffects[1] > 0) { return; }
-        if(!systemDamage.isPlaying){systemDamage.Play();}
+        if (!systemDamage.isPlaying) { systemDamage.Play(); }
 
         torsoStatusEffects[1]++;
-        StartCoroutine(Flicker(middleCanvasBackground));
         AddStatusEffect("Center HUD Damaged");
     }
-    
+
     void FlickerRight()
     {
         if (torsoStatusEffects[2] > 0) { return; }
-        if(!systemDamage.isPlaying){systemDamage.Play();}
+        if (!systemDamage.isPlaying) { systemDamage.Play(); }
 
         torsoStatusEffects[2]++;
-        StartCoroutine(Flicker(rightCanvasBackground));
         AddStatusEffect("Weapon HUD Damaged");
     }
 
     void FlickerLeftLight()
     {
         if (torsoStatusEffects[3] > 0) { return; }
-        if(!systemDamage.isPlaying){systemDamage.Play();}
+        if (!systemDamage.isPlaying) { systemDamage.Play(); }
 
         torsoStatusEffects[3]++;
-        StartCoroutine(Flicker(leftLight));
+
         AddStatusEffect("Left Spotlight Damaged");
     }
 
     void FlickerRightLight()
     {
         if (torsoStatusEffects[4] > 0) { return; }
-        if(!systemDamage.isPlaying){systemDamage.Play();}
+        if (!systemDamage.isPlaying) { systemDamage.Play(); }
 
         torsoStatusEffects[4]++;
-        StartCoroutine(Flicker(rightLight)); 
+
         AddStatusEffect("Right Spotlight Damaged");
     }
 
     void DisableLeftLight()
     {
         if (torsoStatusEffects[5] > 0) { return; }
-        if(!systemDamage.isPlaying){systemDamage.Play();}
+        if (!systemDamage.isPlaying) { systemDamage.Play(); }
 
         torsoStatusEffects[5]++;
         torsoStatusEffects[3]++;
-        
+
         AddStatusEffect("Left Spotlight Destroyed");
     }
 
     void DisableRightLight()
     {
         if (torsoStatusEffects[6] > 0) { return; }
-        if(!systemDamage.isPlaying){systemDamage.Play();}
+        if (!systemDamage.isPlaying) { systemDamage.Play(); }
 
         torsoStatusEffects[6]++;
         torsoStatusEffects[4]++;
-        
+
         AddStatusEffect("Right Spotlight Destroyed");
     }
 
     void LowerShieldMax()
     {
         if (torsoStatusEffects[7] > 3) { return; }
-        if(!systemDamage.isPlaying){systemDamage.Play();}
+        if (!systemDamage.isPlaying) { systemDamage.Play(); }
 
         torsoStatusEffects[7]++;
 
-        switch(torsoStatusEffects[7])
+        switch (torsoStatusEffects[7])
         {
             case 0: Debug.LogError("WTF"); break;
             case 1: AddStatusEffect("Shield capacitor leaking"); break;
@@ -399,7 +454,7 @@ public class DamageHandler : MonoBehaviour, IDamagable
     void ReactorMeltdown()
     {
         if (torsoStatusEffects[8] > 0) { return; }
-        if(!systemDamage.isPlaying){systemDamage.Play();}
+        if (!systemDamage.isPlaying) { systemDamage.Play(); }
 
         torsoStatusEffects[8]++;
         AddStatusEffect("Reactor Meltdown");
@@ -417,16 +472,16 @@ public class DamageHandler : MonoBehaviour, IDamagable
         StartCoroutine(FlashArmIndicator(damagedColor));
         if (Random.Range(0, maxArmHealth - 1) > currentArmHealth)
         {
-            if(!systemDamage.isPlaying){systemDamage.Play();}
+            if (!systemDamage.isPlaying) { systemDamage.Play(); }
             float randomRoll = Random.Range(0, 100) + (currentArmHealth / maxArmHealth * 100);
 
-            if(randomRoll > 90) { IncreaseReloadTime(); UpdateDamageEffects(); return; }
-            if(randomRoll > 85) { DamageBarrel(); UpdateDamageEffects(); return; }
-            if(randomRoll > 75) { HalveClipSize(); UpdateDamageEffects(); return; }
-            if(randomRoll > 65) { HalveFireRate(); UpdateDamageEffects(); return; }
-            if(randomRoll > 55) { DamageBarrel(); UpdateDamageEffects(); return; }
-            if(randomRoll > 45) { IncreaseBulletSpread(); UpdateDamageEffects(); return; }
-            if(randomRoll > 20) { HalveFireRate(); UpdateDamageEffects(); return; }
+            if (randomRoll > 90) { IncreaseReloadTime(); UpdateDamageEffects(); return; }
+            if (randomRoll > 85) { DamageBarrel(); UpdateDamageEffects(); return; }
+            if (randomRoll > 75) { HalveClipSize(); UpdateDamageEffects(); return; }
+            if (randomRoll > 65) { HalveFireRate(); UpdateDamageEffects(); return; }
+            if (randomRoll > 55) { DamageBarrel(); UpdateDamageEffects(); return; }
+            if (randomRoll > 45) { IncreaseBulletSpread(); UpdateDamageEffects(); return; }
+            if (randomRoll > 20) { HalveFireRate(); UpdateDamageEffects(); return; }
             DamageBarrel(); UpdateDamageEffects();
         }
     }
@@ -434,27 +489,27 @@ public class DamageHandler : MonoBehaviour, IDamagable
     void DamageBarrel()
     {
         int barrel = Random.Range(0, 3);
-        if(armStatusEffects[barrel] > 2) { return; }
+        if (armStatusEffects[barrel] > 2) { return; }
         armStatusEffects[barrel]++;
 
-        if(!systemDamage.isPlaying){systemDamage.Play();}
+        if (!systemDamage.isPlaying) { systemDamage.Play(); }
 
         switch (barrel)
         {
-            case 0: 
-                if(armStatusEffects[barrel] == 1) { AddStatusEffect("Barrel 1 warped"); };
-                if(armStatusEffects[barrel] == 2) { AddStatusEffect("Barrel 1 severely damaged"); };
-                if(armStatusEffects[barrel] == 3) { AddStatusEffect("Barrel 1 destroyed"); };
+            case 0:
+                if (armStatusEffects[barrel] == 1) { AddStatusEffect("Barrel 1 warped"); };
+                if (armStatusEffects[barrel] == 2) { AddStatusEffect("Barrel 1 severely damaged"); };
+                if (armStatusEffects[barrel] == 3) { AddStatusEffect("Barrel 1 destroyed"); };
                 break;
-            case 1: 
-                if(armStatusEffects[barrel] == 1) { AddStatusEffect("Barrel 2 warped"); };
-                if(armStatusEffects[barrel] == 2) { AddStatusEffect("Barrel 2 severely damaged"); };
-                if(armStatusEffects[barrel] == 3) { AddStatusEffect("Barrel 2 destroyed"); };
+            case 1:
+                if (armStatusEffects[barrel] == 1) { AddStatusEffect("Barrel 2 warped"); };
+                if (armStatusEffects[barrel] == 2) { AddStatusEffect("Barrel 2 severely damaged"); };
+                if (armStatusEffects[barrel] == 3) { AddStatusEffect("Barrel 2 destroyed"); };
                 break;
-            case 2: 
-                if(armStatusEffects[barrel] == 1) { AddStatusEffect("Barrel 3 warped"); };
-                if(armStatusEffects[barrel] == 2) { AddStatusEffect("Barrel 3 severely damaged"); };
-                if(armStatusEffects[barrel] == 3) { AddStatusEffect("Barrel 3 destroyed"); };
+            case 2:
+                if (armStatusEffects[barrel] == 1) { AddStatusEffect("Barrel 3 warped"); };
+                if (armStatusEffects[barrel] == 2) { AddStatusEffect("Barrel 3 severely damaged"); };
+                if (armStatusEffects[barrel] == 3) { AddStatusEffect("Barrel 3 destroyed"); };
                 break;
             default: Debug.LogError("There is no barrel 4. Fuck you."); break;
         }
@@ -462,12 +517,12 @@ public class DamageHandler : MonoBehaviour, IDamagable
 
     void HalveFireRate()
     {
-        if(armStatusEffects[3] > 1) { return; }
-        if(!systemDamage.isPlaying){systemDamage.Play();}
+        if (armStatusEffects[3] > 1) { return; }
+        if (!systemDamage.isPlaying) { systemDamage.Play(); }
 
         armStatusEffects[3]++;
-        
-        switch(armStatusEffects[3])
+
+        switch (armStatusEffects[3])
         {
             case 1: AddStatusEffect("Gun motor snagging"); break;
             case 2: AddStatusEffect("Firing mechanism damaged"); break;
@@ -478,10 +533,10 @@ public class DamageHandler : MonoBehaviour, IDamagable
     void IncreaseReloadTime()
     {
         if (armStatusEffects[4] > 2) { return; }
-        if(!systemDamage.isPlaying){systemDamage.Play();}
+        if (!systemDamage.isPlaying) { systemDamage.Play(); }
 
         armStatusEffects[4]++;
-        
+
         switch (armStatusEffects[4])
         {
             case 1: AddStatusEffect("Magazine holder misaligned"); break;
@@ -493,8 +548,8 @@ public class DamageHandler : MonoBehaviour, IDamagable
 
     void IncreaseBulletSpread()
     {
-        if(armStatusEffects[5] > 0) { return; }
-        if(!systemDamage.isPlaying){systemDamage.Play();}
+        if (armStatusEffects[5] > 0) { return; }
+        if (!systemDamage.isPlaying) { systemDamage.Play(); }
 
         armStatusEffects[5]++;
 
@@ -504,7 +559,7 @@ public class DamageHandler : MonoBehaviour, IDamagable
     void HalveClipSize()
     {
         if (armStatusEffects[6] > 1) { return; }
-        if(!systemDamage.isPlaying){systemDamage.Play();}
+        if (!systemDamage.isPlaying) { systemDamage.Play(); }
 
         armStatusEffects[6]++;
 
@@ -516,7 +571,7 @@ public class DamageHandler : MonoBehaviour, IDamagable
         }
     }
 
-    
+
 
     #endregion
 
@@ -531,10 +586,10 @@ public class DamageHandler : MonoBehaviour, IDamagable
         {
 
             float randomRoll = Random.Range(0, 100) + (currentLeftLegHealth / maxLegHealth * 100);
-            if(randomRoll > 100) { return; }
+            if (randomRoll > 100) { return; }
             if (randomRoll > 75) { HalveMoveSpeed(0); UpdateDamageEffects(); return; }
-            if(randomRoll > 40) { DoubleStepTime(0); UpdateDamageEffects(); return; }
-            if(randomRoll > 10) { ImpairRotation(0); UpdateDamageEffects(); return; }
+            if (randomRoll > 40) { DoubleStepTime(0); UpdateDamageEffects(); return; }
+            if (randomRoll > 10) { ImpairRotation(0); UpdateDamageEffects(); return; }
             BreakLeg(0); UpdateDamageEffects();
         }
     }
@@ -558,14 +613,14 @@ public class DamageHandler : MonoBehaviour, IDamagable
 
     void HalveMoveSpeed(int leg)
     {
-        if(legStatusEffects[leg][0] > 1) { return; }
-        if(!systemDamage.isPlaying){systemDamage.Play();}
+        if (legStatusEffects[leg][0] > 1) { return; }
+        if (!systemDamage.isPlaying) { systemDamage.Play(); }
 
         legStatusEffects[leg][0]++;
 
         string legName = string.Empty;
-        if(leg == 0) { legName = "Left leg"; } else { legName = "Right leg"; }
-        switch(legStatusEffects[leg][0])
+        if (leg == 0) { legName = "Left leg"; } else { legName = "Right leg"; }
+        switch (legStatusEffects[leg][0])
         {
             case 1: AddStatusEffect(legName + " upper servo jammed"); break;
             case 2: AddStatusEffect(legName + " hydrolic fluid leaking"); break;
@@ -576,7 +631,7 @@ public class DamageHandler : MonoBehaviour, IDamagable
     void DoubleStepTime(int leg)
     {
         if (legStatusEffects[leg][1] > 1) { return; }
-        if(!systemDamage.isPlaying){systemDamage.Play();}
+        if (!systemDamage.isPlaying) { systemDamage.Play(); }
 
         legStatusEffects[leg][1]++;
 
@@ -593,7 +648,7 @@ public class DamageHandler : MonoBehaviour, IDamagable
     void ImpairRotation(int leg)
     {
         if (legStatusEffects[leg][2] > 0) { return; }
-        if(!systemDamage.isPlaying){systemDamage.Play();}
+        if (!systemDamage.isPlaying) { systemDamage.Play(); }
 
         legStatusEffects[leg][2]++;
 
@@ -602,15 +657,6 @@ public class DamageHandler : MonoBehaviour, IDamagable
 
     void BreakLeg(int leg)
     {
-        //if (legStatusEffects[leg][3] > 0) { return; }
-        //if(!systemDamage.isPlaying){systemDamage.Play();}
-
-        //legStatusEffects[leg][3]++;
-        //legStatusEffects[leg][2] = 10;
-        //legStatusEffects[leg][1] = 10;
-        //legStatusEffects[leg][0] = 10;
-        //player.legMoveSpeeds[leg] = 0;
-
         if (legStatusEffects[leg][0] > 2) { return; }
         if (legStatusEffects[leg][0] < 2) { HalveMoveSpeed(leg); return; }
 
@@ -632,16 +678,16 @@ public class DamageHandler : MonoBehaviour, IDamagable
         if (Random.Range(0, maxLauncherHealth - 1) > currentLauncherHealth)
         {
             float randomRoll = Random.Range(0, 100) + (currentLauncherHealth / maxLauncherHealth * 100);
-            if(randomRoll > 110) { DoubleUnloadTime(); return; }
-            if(randomRoll > 85) { IncreaseRegenerationTime(); return; }
-            if(randomRoll > 80) { DoubleDrumRotationTime(); return; }
-            if(randomRoll > 65) { IncreaseHeight(); return; }
-            if(randomRoll > 60) { IncreaseScatter(); return; }
-            if(randomRoll > 50) { DoubleDrumRotationTime(); return; }
-            if(randomRoll > 40) { DoubleLoadTime(); return; }
-            if(randomRoll > 25) { IncreaseRegenerationTime(); return; }
-            if(randomRoll > 15) { DoubleDrumRotationTime(); return; }
-            if(randomRoll > 5) { IncreaseScatter(); return; }
+            if (randomRoll > 110) { DoubleUnloadTime(); UpdateDamageEffects(); return; }
+            if (randomRoll > 85) { IncreaseRegenerationTime(); UpdateDamageEffects(); return; }
+            if (randomRoll > 80) { DoubleDrumRotationTime(); UpdateDamageEffects(); return; }
+            if (randomRoll > 65) { IncreaseHeight(); UpdateDamageEffects(); return; }
+            if (randomRoll > 60) { IncreaseScatter(); UpdateDamageEffects(); return; }
+            if (randomRoll > 50) { DoubleDrumRotationTime(); UpdateDamageEffects(); return; }
+            if (randomRoll > 40) { DoubleLoadTime(); UpdateDamageEffects(); return; }
+            if (randomRoll > 25) { IncreaseRegenerationTime(); UpdateDamageEffects(); return; }
+            if (randomRoll > 15) { DoubleDrumRotationTime(); UpdateDamageEffects(); return; }
+            if (randomRoll > 5) { IncreaseScatter(); UpdateDamageEffects(); return; }
             DestroyRegenerator();
 
 
@@ -650,11 +696,11 @@ public class DamageHandler : MonoBehaviour, IDamagable
 
     void DoubleDrumRotationTime()
     {
-        if(launcherStatusEffects[0] > 2) { return; }
-        if(!systemDamage.isPlaying){systemDamage.Play();}
+        if (launcherStatusEffects[0] > 2) { return; }
+        if (!systemDamage.isPlaying) { systemDamage.Play(); }
 
         launcherStatusEffects[0]++;
-        switch(launcherStatusEffects[0])
+        switch (launcherStatusEffects[0])
         {
             case 1: AddStatusEffect("Launcher drum motor damaged"); break;
             case 2: AddStatusEffect("Launcher drum warped"); break;
@@ -666,7 +712,7 @@ public class DamageHandler : MonoBehaviour, IDamagable
     void DoubleUnloadTime()
     {
         if (launcherStatusEffects[1] > 1) { return; }
-        if(!systemDamage.isPlaying){systemDamage.Play();}
+        if (!systemDamage.isPlaying) { systemDamage.Play(); }
 
         launcherStatusEffects[1]++;
         switch (launcherStatusEffects[1])
@@ -680,7 +726,7 @@ public class DamageHandler : MonoBehaviour, IDamagable
     void DoubleLoadTime()
     {
         if (launcherStatusEffects[2] > 0) { return; }
-        if(!systemDamage.isPlaying){systemDamage.Play();}
+        if (!systemDamage.isPlaying) { systemDamage.Play(); }
 
         launcherStatusEffects[2]++;
         switch (launcherStatusEffects[2])
@@ -693,7 +739,7 @@ public class DamageHandler : MonoBehaviour, IDamagable
     void IncreaseScatter()
     {
         if (launcherStatusEffects[3] > 2) { return; }
-        if(!systemDamage.isPlaying){systemDamage.Play();}
+        if (!systemDamage.isPlaying) { systemDamage.Play(); }
 
         launcherStatusEffects[3]++;
         switch (launcherStatusEffects[3])
@@ -708,12 +754,12 @@ public class DamageHandler : MonoBehaviour, IDamagable
     void IncreaseHeight()
     {
         if (launcherStatusEffects[4] > 0) { return; }
-        if(!systemDamage.isPlaying){systemDamage.Play();}
+        if (!systemDamage.isPlaying) { systemDamage.Play(); }
 
         launcherStatusEffects[4]++;
         switch (launcherStatusEffects[4])
         {
-            case 1: AddStatusEffect("Launcher vertical stabalizer bent"); break;
+            case 1: AddStatusEffect("Launcher vertical stabilizer bent"); break;
             default: Debug.LogError("WTF"); break;
         }
     }
@@ -721,7 +767,7 @@ public class DamageHandler : MonoBehaviour, IDamagable
     void IncreaseRegenerationTime()
     {
         if (launcherStatusEffects[5] > 1) { return; }
-        if(!systemDamage.isPlaying){systemDamage.Play();}
+        if (!systemDamage.isPlaying) { systemDamage.Play(); }
 
         launcherStatusEffects[5]++;
         switch (launcherStatusEffects[5])
@@ -736,12 +782,12 @@ public class DamageHandler : MonoBehaviour, IDamagable
     {
         if (launcherStatusEffects[5] > 2) { return; }
         if (launcherStatusEffects[5] < 2) { IncreaseRegenerationTime(); return; }
-        if(!systemDamage.isPlaying){systemDamage.Play();}
+        if (!systemDamage.isPlaying) { systemDamage.Play(); }
 
         launcherStatusEffects[5] = 3;
-        switch (launcherStatusEffects[6])
+        switch (launcherStatusEffects[5]) //LMAO WHAT
         {
-            case 1: AddStatusEffect("Grenade generator broken"); break;
+            case 3: AddStatusEffect("Grenade generator broken"); break;
             default: Debug.LogError("WTF"); break;
         }
     }
@@ -749,14 +795,277 @@ public class DamageHandler : MonoBehaviour, IDamagable
     #endregion
     #endregion
 
+    #region limbRepairHandlers
+
+    #region TORSO
+
+    public void RepairUILeft()
+    {
+        torsoStatusEffects[0] = 0;
+        RemoveStatusEffect("Status HUD Damaged");
+    }
+
+    public void RepairUIMiddle()
+    {
+        torsoStatusEffects[1] = 0;
+        RemoveStatusEffect("Center HUD Damaged");
+    }
+
+    public void RepairUIRight()
+    {
+        torsoStatusEffects[2] = 0;
+        RemoveStatusEffect("Weapon HUD Damaged");
+    }
+
+    public void RepairLightLeft()
+    {
+        torsoStatusEffects[3] = 0;
+        torsoStatusEffects[5] = 0;
+        RemoveStatusEffect("Left Spotlight Damaged");
+        RemoveStatusEffect("Left Spotlight Destroyed");
+    }
+    
+    public void RepairLightRight()
+    {
+        torsoStatusEffects[4] = 0;
+        torsoStatusEffects[6] = 0;
+        RemoveStatusEffect("Right Spotlight Damaged");
+        RemoveStatusEffect("Right Spotlight Destroyed");
+    }
+
+    public void RepairShields()
+    {
+        torsoStatusEffects[7] = 0;
+        RemoveStatusEffect("Shield capacitor leaking");
+        RemoveStatusEffect("Shield matrix misaligned");
+        RemoveStatusEffect("Shields cascading");
+        RemoveStatusEffect("Shields destroyed");
+    }
+
+    public void RepairArmor()
+    {
+        torsoStatusEffects[9] = 0;
+        RemoveStatusEffect("Torso armor punctured");
+        RemoveStatusEffect("Torso armor severely damaged");
+        RemoveStatusEffect("Torso armor broken");
+    }
+
+    #endregion
+
+    #region ARM
+
+    public void RepairBarrelZero()
+    {
+        armStatusEffects[0] = 0;
+        RemoveStatusEffect("Barrel 1 warped");
+        RemoveStatusEffect("Barrel 1 severely damaged");
+        RemoveStatusEffect("Barrel 1 destroyed");
+    }
+    
+    public void RepairBarrelOne()
+    {
+        armStatusEffects[1] = 0;
+        RemoveStatusEffect("Barrel 2 warped");
+        RemoveStatusEffect("Barrel 2 severely damaged");
+        RemoveStatusEffect("Barrel 2 destroyed");
+    }
+    
+    public void RepairBarrelTwo()
+    {
+        armStatusEffects[2] = 0;
+        RemoveStatusEffect("Barrel 3 warped");
+        RemoveStatusEffect("Barrel 3 severely damaged");
+        RemoveStatusEffect("Barrel 3 destroyed");
+    }
+
+    public void RepairFireRate()
+    {
+        armStatusEffects[3] = 0;
+        RemoveStatusEffect("Gun motor snagging");
+        RemoveStatusEffect("Firing mechanism damaged");
+    }
+
+    public void RepairReloadTime()
+    {
+        armStatusEffects[4] = 0;
+        RemoveStatusEffect("Magazine holder misaligned");
+        RemoveStatusEffect("Reload coroutine lagging");
+        RemoveStatusEffect("Clip ejector jammed");
+    }
+
+    public void RepairBulletSpread()
+    {
+        armStatusEffects[5] = 0;
+        RemoveStatusEffect("Targeting mechanisms failing");
+    }
+
+    public void RepairClipSize()
+    {
+        armStatusEffects[6] = 0;
+        RemoveStatusEffect("Secondary clip feed broken");
+        RemoveStatusEffect("Clip feed jammed");
+    }
+
+    #endregion
+
+    #region LEGS
+
+    public void RepairMoveSpeed(int leg)
+    {
+        legStatusEffects[leg][0] = 0;
+        
+        string legName = string.Empty;
+        if (leg == 0) { legName = "Left leg"; } else { legName = "Right leg"; }
+
+        RemoveStatusEffect(legName + " upper servo jammed");
+        RemoveStatusEffect(legName + " hydrolic fluid leaking");
+        RemoveStatusEffect(legName + " disabled");
+    }
+
+    public void RepairStepTime(int leg)
+    {
+        legStatusEffects[leg][1] = 0;
+        
+        string legName = string.Empty;
+        if (leg == 0) { legName = "Left leg"; } else { legName = "Right leg"; }
+
+        RemoveStatusEffect(legName + " speed limited");
+        RemoveStatusEffect(legName + " brakes misfiring");        
+    }
+
+    public void RepairRotationSpeed()
+    {
+        legStatusEffects[0][2] = 0;
+        legStatusEffects[1][2] = 0;
+
+        RemoveStatusEffect("Rotation servos damaged");
+    }
+
+    #endregion
+
+    #region LAUNCHER
+
+    public void RepairDrumRotation()
+    {
+        launcherStatusEffects[0] = 0;
+        RemoveStatusEffect("Launcher drum motor damaged");
+        RemoveStatusEffect("Launcher drum warped");
+        RemoveStatusEffect("Launcher drum severely damaged");
+    }
+
+    public void RepairUnloadTime()
+    {
+        launcherStatusEffects[1] = 0;
+        RemoveStatusEffect("Launcher unload rail warped");
+        RemoveStatusEffect("Launcher leaking hydrolic fluid");
+    }
+
+    public void RepairLoadTime()
+    {
+        launcherStatusEffects[2] = 0;
+        RemoveStatusEffect("Launcher loading mechanism damaged");
+    }
+
+    public void RepairScatter()
+    {
+        launcherStatusEffects[3] = 0;
+        RemoveStatusEffect("Launcher barrel misaligned");
+        RemoveStatusEffect("Launcher targeting sensor blocked");
+        RemoveStatusEffect("Launcher barrel bent");
+    }
+
+    public void RepairProjectileHeight()
+    {
+        launcherStatusEffects[4] = 0;
+        RemoveStatusEffect("Launcher vertical stabilizer bent");
+    }
+
+    public void RepairGrenadeRegenerator()
+    {
+        launcherStatusEffects[5] = 0;
+        RemoveStatusEffect("Grenade generator leaking");
+        RemoveStatusEffect("Grenade generator feed clogged");
+        RemoveStatusEffect("Grenade generator broken");
+    }
+
+    #endregion
+
+    #endregion
+
     IEnumerator Flicker(GameObject targetObject)
     {
-        Transform[] targets = targetObject.GetComponentsInChildren<Transform>();
-        while(true)
+        Image[] targets = targetObject.GetComponentsInChildren<Image>();
+        while (true)
         {
             yield return new WaitForSeconds(Random.Range(flickerMinTime / Mathf.Min(targets.Length, 5), flickerMaxTime / Mathf.Min(targets.Length, 5)));
-            GameObject current = targets[Random.Range(0, targets.Length)].gameObject;
-            current.SetActive(!current.activeSelf);
+
+            //half of the time, flicker an image. Otherwise, flicker text;
+            if (Random.Range(0, 2) == 0)
+            {
+                Image current = targets[Random.Range(0, targets.Length)];
+
+                Image[] par = current.GetComponentsInParent<Image>();
+
+                bool isParentActive = true;
+                foreach (Image i in par)
+                {
+                    if (i == current) { continue; }
+                    isParentActive = isParentActive && i.enabled;
+                }
+
+                if (!isParentActive) { continue; }
+
+                current.enabled = !current.enabled;
+
+                Image[] kids = current.GetComponentsInChildren<Image>();
+                Text[] kidsText = current.GetComponentsInChildren<Text>();
+
+                foreach (Image i in kids)
+                { i.enabled = current.enabled; }
+
+                foreach (Text t in kidsText)
+                {
+                    t.enabled = current.enabled;
+                }
+            }
+            else
+            {
+                Text[] texts = targetObject.GetComponentsInChildren<Text>();
+                for (int i = 0; i < Random.Range(1,4); i++)
+                {
+                    Text current = Utility.Pick(texts);
+
+                    Image[] par = current.GetComponentsInParent<Image>();
+
+                    bool isParentActive = true;
+                    foreach (Image img in par)
+                    {
+                        if (img == current) { continue; }
+                        isParentActive = isParentActive && img.enabled;
+                    }
+
+                    if (!isParentActive) { continue; }
+
+                    current.enabled = !current.enabled;
+                    yield return new WaitForSeconds(Random.Range(flickerMinTime, flickerMaxTime));
+                }                
+            }
+        }
+    }
+
+    void StopFlicker(GameObject targetObject)
+    {
+        Image[] targets = targetObject.GetComponentsInChildren<Image>();
+        Text[] targetTexts = targetObject.GetComponentsInChildren<Text>();
+
+        foreach (Text t in targetTexts)
+        {
+            t.enabled = true;
+        }
+
+        foreach (Image i in targets)
+        {
+            i.enabled = true;
         }
     }
 
@@ -767,6 +1076,11 @@ public class DamageHandler : MonoBehaviour, IDamagable
             yield return new WaitForSeconds(Random.Range(flickerMinTime, flickerMaxTime));
             light.enabled = !light.enabled;
         }
+    }
+
+    void StopFlicker(Light light)
+    {
+        light.enabled = true;
     }
 
     #region indicator flashin
@@ -834,20 +1148,32 @@ public class DamageHandler : MonoBehaviour, IDamagable
 
     void AddStatusEffect(string text)
     {
-        statusEffects.Add(text);
-        systemDamageText[0].SetActive(statusEffects.Count >= 5 && statusEffects.Count < 12);
-        systemDamageText[1].SetActive(statusEffects.Count >= 12 && statusEffects.Count < 20);
-        if(statusEffects.Count >= 20)
-        {
-            systemDamageText[2].SetActive(true);
-            if (!warningSiren.isPlaying) { warningSiren.Play(); }
-        }
-        
+        statusEffects.Add(text);        
+        UpdateStatusEffects();
+    }
+
+    void RemoveStatusEffect(string text)
+    {
+        //statusEffects.Remove(text);
+        statusEffects.RemoveAll(x => x == text); //Not sure if this works but like, let's find out?
         UpdateStatusEffects();
     }
 
     void UpdateStatusEffects()
     {
+        systemDamageText[0].SetActive(statusEffects.Count >= 5 && statusEffects.Count < 12);
+        systemDamageText[1].SetActive(statusEffects.Count >= 12 && statusEffects.Count < 20);
+        if (statusEffects.Count >= 20)
+        {
+            systemDamageText[2].SetActive(true);
+            if (!warningSiren.isPlaying) { warningSiren.Play(); }
+        }
+        else
+        {
+            systemDamageText[2].SetActive(false);
+            warningSiren.Stop();
+        }
+
         string result = string.Empty;
         for (int i = 0; i < statusEffects.Count; i++)
         {

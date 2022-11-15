@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class CursorVisibility : MonoBehaviour
 {
@@ -14,5 +15,10 @@ public class CursorVisibility : MonoBehaviour
     {
         if (!Application.isPlaying) { return; }
         Cursor.visible = false;
+    }
+
+    private void Update()
+    {
+        Cursor.visible = GetComponent<Image>().enabled;
     }
 }
