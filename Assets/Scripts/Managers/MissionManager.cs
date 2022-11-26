@@ -98,6 +98,7 @@ public class MissionManager : MonoBehaviour
 
     public void CompleteSecondaryObjective(int i)
     {
+        if(secondaryObjectiveTexts[i] == null) { return; } //Haha I love me some editor errors
         secondaryObjectiveTexts[i].color = objectiveCompletedColor;
         objectiveNotificationSound.Play();
     }

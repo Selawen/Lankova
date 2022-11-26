@@ -73,6 +73,8 @@ public class PlayerMovement : MonoBehaviour
     bool sprinting, canSprint;
     #endregion
 
+    public bool repairPanelActive = false;
+
     private void Awake()
     {
         Instance = this;
@@ -291,23 +293,13 @@ public class PlayerMovement : MonoBehaviour
 
         while(true)
         {
-            while(!Input.GetMouseButton(0) || Time.timeScale <= 0.0f)
+            while(!Input.GetMouseButton(0) || Time.timeScale <= 0.0f || repairPanelActive)
             {
                 yield return null;
             }
 
             if (Random.Range(0.0f, 0.99f) < barrelFireChances[currentBarrel])
             {
-                //RaycastHit hit;
-                //Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-                //if (Physics.Raycast(ray, out hit, 50, gunPointerLayers))
-                //{
-                //    bulletSpawn.transform.LookAt(hit.point);
-                //}
-                //else
-                //{
-                //    bulletSpawn.transform.LookAt(ray.GetPoint(50));
-                //}
                 bulletSpawn.transform.LookAt(currentTargetPoint);
 
                 for (int i = 0; i < bulletAmount; i++)

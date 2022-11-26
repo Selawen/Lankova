@@ -15,10 +15,10 @@ MonoBehaviour:
   baseMoveSpeed: 1.5
   baseStepTime: 0.5
   baseNormalRotationSpeed: 20
-  legMoveSpeeds:
+  baseLegMoveSpeeds:
   - 2
   - 2
-  legStepTimes:
+  baseLegStepTimes:
   - 0.25
   - 0.25
   baseBopHeight: 0.1
@@ -40,3 +40,12 @@ MonoBehaviour:
   baseGrenadeMaxAmmo: 02000000040000000300000002000000
   baseMaxScatter: 0
   baseRegenActive: 1
+  baseShieldMax: 100
+  baseMinimumShieldRechargeAmount: 5
+  baseShieldRechargePenalty: 5
+  baseTorsoArmor: 3
+  baseMaxTorsoHealth: 200
+  baseMaxLegHealth: 100
+  baseMaxArmHealth: 100
+  baseMaxLauncherHealth: 100
+  baseEMPTime: 9
